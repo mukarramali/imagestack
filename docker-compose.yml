@@ -2,3 +2,6 @@ services:
   compressor:
     build:
       context: services/compressor
+      target: final
+    ports:
+      - 8080:8080
