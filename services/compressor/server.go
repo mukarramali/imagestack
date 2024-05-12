@@ -15,7 +15,7 @@ import (
 var (
 	mu      sync.Mutex
 	images  map[string]string = make(map[string]string) // Maps image URL to local compressed file path
-	baseDir string            = "compressed_images"
+	baseDir string            = "/data/images"
 )
 
 func init() {

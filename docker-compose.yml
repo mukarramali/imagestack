@@ -5,3 +5,11 @@ services:
       target: final
     ports:
       - 8080:8080
+    volumes:
+      - ./data/images:/data/images
+  redis:
+    ports:
+      - 6379:6379
+    image: redis:alpine
+    volumes:
+      - ./data/redis:/data

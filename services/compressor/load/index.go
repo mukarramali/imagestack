@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	baseDir string = "compressed_images"
+	baseDir string = "/data/images"
 )
 
 func DownloadImage(url string) (string, error) {
