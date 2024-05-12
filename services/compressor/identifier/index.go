@@ -1,7 +1,7 @@
 package identifier
 
 import (
-	"compressor/data/redis_service"
+	"compressor/external/redis_service"
 	"context"
 	"fmt"
 
