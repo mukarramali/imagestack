@@ -2,6 +2,7 @@ package main
 
 import (
 	"compressor/compress"
+	"compressor/external/rabbitmq_service"
 	"compressor/load"
 	"fmt"
 	"net/http"
@@ -36,6 +37,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Image is already being processed")
 		return
 	}
+
 	images[url] = ""
 	mu.Unlock()
 
@@ -76,6 +78,8 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "URL is required", http.StatusBadRequest)
 		return
 	}
+
+	rabbitmq_service.Publish("images", url)
 
 	mu.Lock()
 	path, exists := images[url]
