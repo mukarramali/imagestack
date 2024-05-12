@@ -1,0 +1,4 @@
+services:
+  compressor:
+    build:
+      context: services/compressor
