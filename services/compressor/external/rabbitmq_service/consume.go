@@ -4,27 +4,15 @@ import (
 	"log"
 )
 
-func Consume(queue string) {
-	ch := getClient()
-
-	q, err := ch.QueueDeclare(
-		queue, // name
-		false, // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
-
-	msgs, err := ch.Consume(
-		q.Name, // queue
-		"",     // consumer
-		true,   // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
+func (rs *RabbitMqService) Consume() {
+	msgs, err := rs.client.Consume(
+		rs.queue.Name, // queue
+		"",            // consumer
+		true,          // auto-ack
+		false,         // exclusive
+		false,         // no-local
+		false,         // no-wait
+		nil,           // args
 	)
 	failOnError(err, "Failed to register a consumer")
 
