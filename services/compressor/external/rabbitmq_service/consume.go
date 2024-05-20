@@ -20,10 +20,14 @@ func (rs *RabbitMqService) Consume() {
 
 	go func() {
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+			handler(d.Body)
 		}
 	}()
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 	<-forever
+}
+
+func handler(msg []byte) {
+	log.Printf("Received a message: %s", msg)
 }
