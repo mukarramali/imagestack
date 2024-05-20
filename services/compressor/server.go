@@ -5,6 +5,7 @@ import (
 	"compressor/external/rabbitmq_service"
 	"compressor/identifier"
 	"compressor/load"
+	"compressor/shared"
 	"fmt"
 	"log"
 	"net/http"
@@ -17,7 +18,6 @@ import (
 
 // map to store image processing status
 var (
-	baseDir              string = "/data/images"
 	downloadQueueService *rabbitmq_service.RabbitMqService
 	compressQueueService *rabbitmq_service.RabbitMqService
 	cleanupQueueService  *rabbitmq_service.RabbitMqService
@@ -30,13 +30,13 @@ func failOnError(err error, msg string) {
 }
 
 func init() {
-	os.MkdirAll(baseDir, os.ModePerm)
+	os.MkdirAll(shared.BASE_IMAGE_DIR, os.ModePerm)
 
 	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images")
 	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images")
 	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images")
 
-	downloadQueueService.Consume(func(msg amqp091.Delivery) {
+	go downloadQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
 		request, _ := identifier.GetRequest(requestId)
 
@@ -50,11 +50,11 @@ func init() {
 		// send event for compressing
 		compressQueueService.Publish(requestId)
 	})
-	compressQueueService.Consume(func(msg amqp091.Delivery) {
+	go compressQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
 		request, _ := identifier.GetRequest(requestId)
 
-		outputPath := filepath.Join(baseDir, fmt.Sprintf("compressed_%s.jpg", requestId))
+		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, fmt.Sprintf("compressed_%s.jpg", requestId))
 
 		// compress
 		compress.CompressImage(request.LocalPathUnOptimized, outputPath)
@@ -62,7 +62,7 @@ func init() {
 		// send event for cleanup
 		cleanupQueueService.Publish(requestId)
 	})
-	cleanupQueueService.Consume(func(msg amqp091.Delivery) {
+	go cleanupQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
 		request, _ := identifier.GetRequest(requestId)
 		os.Remove(request.LocalPathUnOptimized)

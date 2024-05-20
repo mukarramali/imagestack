@@ -1,16 +1,13 @@
 package load
 
 import (
+	"compressor/shared"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
-)
-
-var (
-	baseDir string = "/data/images"
 )
 
 func DownloadImage(url string) (string, error) {
@@ -20,7 +17,7 @@ func DownloadImage(url string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	localPath := filepath.Join(baseDir, fmt.Sprintf("%d.jpg", time.Now().UnixNano()))
+	localPath := filepath.Join(shared.BASE_IMAGE_DIR, fmt.Sprintf("%d.jpg", time.Now().UnixNano()))
 	file, err := os.Create(localPath)
 	if err != nil {
 		return "", err

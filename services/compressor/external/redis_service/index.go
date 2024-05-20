@@ -1,6 +1,7 @@
 package redis_service
 
 import (
+	"compressor/shared"
 	"context"
 	"fmt"
 	"sync"
@@ -13,7 +14,7 @@ var redisClient *redis.Client
 
 func getClient() *redis.Client {
 	client := redis.NewClient(&redis.Options{
-		Addr: "redis:6379",
+		Addr: shared.REDIS_URL,
 	})
 	return client
 }

@@ -1,13 +1,15 @@
 package rabbitmq_service
 
 import (
+	"compressor/shared"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func getClient() *amqp.Channel {
-	conn, err := amqp.Dial(RABBITMQ_HOST)
-	failOnError(err, "Failed to connect to RabbitMQ")
+	conn, err := amqp.Dial(shared.RABBITMQ_URL)
+	shared.FailOnError(err, "Failed to connect to RabbitMQ")
 	ch, err := conn.Channel()
-	failOnError(err, "Failed to open a channel")
+	shared.FailOnError(err, "Failed to open a channel")
 	return ch
 }
