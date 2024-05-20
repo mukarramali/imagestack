@@ -24,7 +24,8 @@ var (
 )
 
 func init() {
-	os.MkdirAll(shared.BASE_IMAGE_DIR, os.ModePerm)
+	os.MkdirAll(shared.BASE_IMAGE_DIR+"raw", os.ModePerm)
+	os.MkdirAll(shared.BASE_IMAGE_DIR+"compressed", os.ModePerm)
 
 	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images")
 	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images")
@@ -35,7 +36,8 @@ func init() {
 		request, _ := identifier.GetRequest(requestId)
 
 		// download image
-		localPath, err := load.DownloadImage(request.Url)
+		localPath := filepath.Join(shared.BASE_IMAGE_DIR, "raw", fmt.Sprintf("%s.jpg", requestId))
+		err := load.DownloadImage(request.Url, localPath)
 		shared.FailOnError(err, "Could not download image")
 
 		// update request with local un optimized image path
@@ -48,10 +50,11 @@ func init() {
 		requestId := string(msg.Body)
 		request, _ := identifier.GetRequest(requestId)
 
-		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, fmt.Sprintf("compressed_%s.jpg", requestId))
+		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", requestId))
 
 		// compress
 		compress.CompressImage(request.LocalPathUnOptimized, outputPath)
+		identifier.SetLocalPathOptimized(requestId, outputPath)
 
 		// send event for cleanup
 		cleanupQueueService.Publish(requestId)
