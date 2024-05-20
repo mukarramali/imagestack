@@ -7,6 +7,9 @@ services:
       - 8080:8080
     volumes:
       - ./data/images:/data/images
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
   redis:
     ports:
       - 6379:6379
@@ -25,3 +28,8 @@ services:
     volumes:
       - ./data/rabbitmq/data:/var/lib/rabbitmq
       - ./data/rabbitmq/log:/var/log/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
