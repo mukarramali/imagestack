@@ -4,6 +4,7 @@ import (
 	"compressor/external/redis_service"
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/google/uuid"
 )
@@ -109,6 +110,9 @@ func GetRequest(id string) (*request, error) {
 
 func GetRequestByUrl(url string) (*request, error) {
 	redisService := redis_service.GetRedisService()
+	if redisService == nil {
+		return nil, errors.New("redis service not available")
+	}
 	id, err := redisService.Get(context.Background(), url).Result()
 	if err != nil {
 		return nil, err

@@ -21,7 +21,7 @@ func getClient() *redis.Client {
 
 func GetRedisService() *redis.Client {
 	once.Do(func() {
-		redisClient := getClient()
+		redisClient = getClient()
 
 		_, err := redisClient.Ping(context.Background()).Result()
 		if err != nil {

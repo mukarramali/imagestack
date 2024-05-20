@@ -3,11 +3,11 @@ package main
 import (
 	"compressor/compress"
 	"compressor/external/rabbitmq_service"
+	"compressor/external/redis_service"
 	"compressor/identifier"
 	"compressor/load"
 	"compressor/shared"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -23,12 +23,6 @@ var (
 	cleanupQueueService  *rabbitmq_service.RabbitMqService
 )
 
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Panicf("%s: %s", msg, err)
-	}
-}
-
 func init() {
 	os.MkdirAll(shared.BASE_IMAGE_DIR, os.ModePerm)
 
@@ -42,7 +36,7 @@ func init() {
 
 		// download image
 		localPath, err := load.DownloadImage(request.Url)
-		failOnError(err, "Could not download image")
+		shared.FailOnError(err, "Could not download image")
 
 		// update request with local un optimized image path
 		identifier.SetLocalPathUnOptimized(requestId, localPath)
@@ -68,6 +62,8 @@ func init() {
 		os.Remove(request.LocalPathUnOptimized)
 		identifier.SetStatus(requestId, "completed")
 	})
+
+	go redis_service.GetRedisService()
 }
 
 func imageHandler(w http.ResponseWriter, r *http.Request) {
@@ -95,9 +91,10 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	if err == redis.Nil {
 		fmt.Fprintln(w, "Image never existed")
 		return
+	} else if err != nil {
+		fmt.Fprintln(w, err)
+		return
 	}
-
-	failOnError(err, "Could not check")
 
 	if request.Status != "completed" {
 		fmt.Fprintln(w, "Image processing status"+request.Status)
