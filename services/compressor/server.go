@@ -14,13 +14,23 @@ import (
 
 // map to store image processing status
 var (
-	mu      sync.Mutex
-	images  map[string]string = make(map[string]string) // Maps image URL to local compressed file path
-	baseDir string            = "/data/images"
+	mu                   sync.Mutex
+	images               map[string]string = make(map[string]string) // Maps image URL to local compressed file path
+	baseDir              string            = "/data/images"
+	downloadQueueService *rabbitmq_service.RabbitMqService
+	compressQueueService *rabbitmq_service.RabbitMqService
+	cleanupQueueService  *rabbitmq_service.RabbitMqService
 )
 
 func init() {
 	os.MkdirAll(baseDir, os.ModePerm)
+	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images")
+	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images")
+	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images")
+
+	downloadQueueService.Consume()
+	compressQueueService.Consume()
+	cleanupQueueService.Consume()
 }
 
 func imageHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,23 +40,9 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mu.Lock()
-	_, exists := images[url]
-	if exists {
-		mu.Unlock()
-		fmt.Fprintf(w, "Image is already being processed")
-		return
-	}
-
-	images[url] = ""
-	mu.Unlock()
-
 	go func() {
-		defer func() {
-			mu.Lock()
-			delete(images, url)
-			mu.Unlock()
-		}()
+
+		downloadQueueService.Publish(url)
 
 		fmt.Println("Downloading the image from ", url)
 		localPath, err := load.DownloadImage(url)

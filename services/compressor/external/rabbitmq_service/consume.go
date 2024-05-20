@@ -20,6 +20,7 @@ func (rs *RabbitMqService) Consume() {
 
 	go func() {
 		for d := range msgs {
+			log.Println(d)
 			handler(d.Body)
 		}
 	}()
