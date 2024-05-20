@@ -3,34 +3,71 @@ package main
 import (
 	"compressor/compress"
 	"compressor/external/rabbitmq_service"
+	"compressor/identifier"
 	"compressor/load"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-	"sync"
-	"time"
+
+	"github.com/rabbitmq/amqp091-go"
+	"github.com/redis/go-redis/v9"
 )
 
 // map to store image processing status
 var (
-	mu                   sync.Mutex
-	images               map[string]string = make(map[string]string) // Maps image URL to local compressed file path
-	baseDir              string            = "/data/images"
+	baseDir              string = "/data/images"
 	downloadQueueService *rabbitmq_service.RabbitMqService
 	compressQueueService *rabbitmq_service.RabbitMqService
 	cleanupQueueService  *rabbitmq_service.RabbitMqService
 )
 
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Panicf("%s: %s", msg, err)
+	}
+}
+
 func init() {
 	os.MkdirAll(baseDir, os.ModePerm)
+
 	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images")
 	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images")
 	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images")
 
-	downloadQueueService.Consume()
-	compressQueueService.Consume()
-	cleanupQueueService.Consume()
+	downloadQueueService.Consume(func(msg amqp091.Delivery) {
+		requestId := string(msg.Body)
+		request, _ := identifier.GetRequest(requestId)
+
+		// download image
+		localPath, err := load.DownloadImage(request.Url)
+		failOnError(err, "Could not download image")
+
+		// update request with local un optimized image path
+		identifier.SetLocalPathUnOptimized(requestId, localPath)
+
+		// send event for compressing
+		compressQueueService.Publish(requestId)
+	})
+	compressQueueService.Consume(func(msg amqp091.Delivery) {
+		requestId := string(msg.Body)
+		request, _ := identifier.GetRequest(requestId)
+
+		outputPath := filepath.Join(baseDir, fmt.Sprintf("compressed_%s.jpg", requestId))
+
+		// compress
+		compress.CompressImage(request.LocalPathUnOptimized, outputPath)
+
+		// send event for cleanup
+		cleanupQueueService.Publish(requestId)
+	})
+	cleanupQueueService.Consume(func(msg amqp091.Delivery) {
+		requestId := string(msg.Body)
+		request, _ := identifier.GetRequest(requestId)
+		os.Remove(request.LocalPathUnOptimized)
+		identifier.SetStatus(requestId, "completed")
+	})
 }
 
 func imageHandler(w http.ResponseWriter, r *http.Request) {
@@ -40,31 +77,9 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func() {
+	imageId, _ := identifier.NewRequest(url)
 
-		downloadQueueService.Publish(url)
-
-		fmt.Println("Downloading the image from ", url)
-		localPath, err := load.DownloadImage(url)
-		if err != nil {
-			fmt.Println("Failed to download image:", err)
-			return
-		}
-
-		outputPath := filepath.Join(baseDir, fmt.Sprintf("compressed_%d.jpg", time.Now().UnixNano()))
-
-		fmt.Println("Compressing the image from ", url)
-		err = compress.CompressImage(localPath, outputPath)
-		if err != nil {
-			fmt.Println("Failed to compress image:", err)
-			return
-		}
-
-		mu.Lock()
-		images[url] = outputPath
-		mu.Unlock()
-		fmt.Println("Compressed the image for ", url)
-	}()
+	downloadQueueService.Publish(imageId)
 	fmt.Fprintf(w, "Image processing started. Check status at /status?url=%s", url)
 }
 
@@ -75,21 +90,19 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rabbitmq_service.Publish("images", url)
+	request, err := identifier.GetRequestByUrl(url)
 
-	mu.Lock()
-	path, exists := images[url]
-	mu.Unlock()
-
-	if !exists {
-		fmt.Fprintln(w, "No such image processing found or it might have been completed.")
+	if err == redis.Nil {
+		fmt.Fprintln(w, "Image never existed")
 		return
 	}
 
-	if path == "" {
-		fmt.Fprintln(w, "Image processing in progress")
+	failOnError(err, "Could not check")
+
+	if request.Status != "completed" {
+		fmt.Fprintln(w, "Image processing status"+request.Status)
 	} else {
-		fmt.Fprintf(w, "Image processing complete. Download from %s", path)
+		fmt.Fprintf(w, "Image processing complete. Download from %s", request.LocalPathOptimized)
 	}
 }
 

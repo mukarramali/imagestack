@@ -2,9 +2,11 @@ package rabbitmq_service
 
 import (
 	"log"
+
+	"github.com/rabbitmq/amqp091-go"
 )
 
-func (rs *RabbitMqService) Consume() {
+func (rs *RabbitMqService) Consume(handler func(msg amqp091.Delivery)) {
 	msgs, err := rs.client.Consume(
 		rs.queue.Name, // queue
 		"",            // consumer
@@ -21,14 +23,10 @@ func (rs *RabbitMqService) Consume() {
 	go func() {
 		for d := range msgs {
 			log.Println(d)
-			handler(d.Body)
+			handler(d)
 		}
 	}()
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
 	<-forever
-}
-
-func handler(msg []byte) {
-	log.Printf("Received a message: %s", msg)
 }
