@@ -74,17 +74,25 @@ func init() {
 	go redis_service.GetRedisService()
 }
 
-func imageHandler(w http.ResponseWriter, r *http.Request) {
+func submitHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.FormValue("url")
 	if url == "" {
 		http.Error(w, "URL is required", http.StatusBadRequest)
 		return
 	}
 
+	existingRequest, _ := identifier.GetRequestByUrl(url)
+	if existingRequest != nil {
+		fmt.Fprintf(w, "Go to:%s", existingRequest.LocalPathOptimized)
+		return
+	}
+
 	imageId, _ := identifier.NewRequest(url)
 
 	downloadQueueService.Publish(imageId)
-	fmt.Fprintf(w, "Image processing started. Check status at /status?url=%s", url)
+
+	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
+	fmt.Fprintf(w, "Go to:%s", futureUrl)
 }
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +120,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/submit", imageHandler)
-	http.HandleFunc("/status", statusHandler)
+	http.HandleFunc("/", submitHandler)
 	http.ListenAndServe(":8080", nil)
 }
