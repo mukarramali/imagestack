@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 
 	"github.com/rabbitmq/amqp091-go"
-	"github.com/redis/go-redis/v9"
 )
 
 // map to store image processing status
@@ -93,30 +92,6 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
 	fmt.Fprintf(w, "Go to:%s", futureUrl)
-}
-
-func statusHandler(w http.ResponseWriter, r *http.Request) {
-	url := r.URL.Query().Get("url")
-	if url == "" {
-		http.Error(w, "URL is required", http.StatusBadRequest)
-		return
-	}
-
-	request, err := identifier.GetRequestByUrl(url)
-
-	if err == redis.Nil {
-		fmt.Fprintln(w, "Image never existed")
-		return
-	} else if err != nil {
-		fmt.Fprintln(w, err)
-		return
-	}
-
-	if request.Status != "completed" {
-		fmt.Fprintln(w, "Image processing status"+request.Status)
-	} else {
-		fmt.Fprintf(w, "Image processing complete. Download from %s", request.LocalPathOptimized)
-	}
 }
 
 func main() {
