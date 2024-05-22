@@ -82,7 +82,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	existingRequest, _ := identifier.GetRequestByUrl(url)
 	if existingRequest != nil {
-		fmt.Fprintf(w, "Go to:%s", existingRequest.LocalPathOptimized)
+		http.ServeFile(w, r, existingRequest.LocalPathOptimized)
 		return
 	}
 
@@ -91,7 +91,8 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	downloadQueueService.Publish(imageId)
 
 	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
-	fmt.Fprintf(w, "Go to:%s", futureUrl)
+
+	http.ServeFile(w, r, futureUrl)
 }
 
 func main() {
