@@ -53,7 +53,12 @@ func init() {
 		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", requestId))
 
 		// compress
-		compress.CompressImage(request.LocalPathUnOptimized, outputPath)
+		err := compress.CompressImage(request.LocalPathUnOptimized, outputPath)
+
+		if err != nil {
+			shared.FailOnError(err, "Could not compress image")
+		}
+
 		identifier.SetLocalPathOptimized(requestId, outputPath)
 
 		// send event for cleanup
