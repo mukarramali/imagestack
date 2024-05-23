@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/rabbitmq/amqp091-go"
 )
@@ -93,7 +94,13 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
 
-	http.ServeFile(w, r, futureUrl)
+	if shared.WaitForFile(futureUrl, 5*time.Second) {
+		fmt.Println("Image compressed" + futureUrl)
+		http.ServeFile(w, r, futureUrl)
+	} else {
+		fmt.Println("File could not be generated in time for " + url)
+		http.Error(w, "File not ready", http.StatusGatewayTimeout)
+	}
 }
 
 func main() {
