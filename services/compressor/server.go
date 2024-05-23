@@ -66,7 +66,8 @@ func init() {
 	go cleanupQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
 		request, _ := identifier.GetRequest(requestId)
-		os.Remove(request.LocalPathUnOptimized)
+		err := os.Remove(request.LocalPathUnOptimized)
+		shared.FailOnError(err, "Couldn't delete uncompressed image")
 		identifier.SetStatus(requestId, "completed")
 	})
 
