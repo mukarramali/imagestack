@@ -15,8 +15,7 @@ Service to compress images on the fly
 1. RabbitMQ dashboard: http://localhost:15672
 2. Image stack service: http://localhost:8080/?url={your-image-url}
 
-## Goal
+## What's need to be done
 
-Currently all the queues get handled by the same service which serves endpoint to the end user.
-Goal is run different queues in their own service talking to the same rabbit mq.
-And then scale services based on the usage.
+1. Introduce CDN in front
+2. Run different queues in their own service
