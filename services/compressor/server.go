@@ -96,6 +96,11 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	if shared.WaitForFile(futureUrl, 5*time.Second) {
 		fmt.Println("Image compressed" + futureUrl)
+		w.Header().Add("Content-Type", "image/webp")
+		w.Header().Add("Content-Type", "image/webp")
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Access-Control-Allow-Methods", "*")
+		w.Header().Add("Cache-Control", "public, max-age=3")
 		http.ServeFile(w, r, futureUrl)
 	} else {
 		fmt.Println("File could not be generated in time for " + url)
