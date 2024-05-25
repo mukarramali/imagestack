@@ -4,8 +4,9 @@ services:
       context: services/compressor
       target: final
     environment:
-      REDIS_URL: "redis://6379"
-      RABBITMQ_URL: "amqp://user:password@localhost:5672/"
+      REDIS_URL: "redis://redis:6379"
+      RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
+      BASE_IMAGE_DIR: "/data/images"
     ports:
       - 8080:8080
     volumes:
