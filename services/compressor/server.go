@@ -24,9 +24,9 @@ var (
 )
 
 func init() {
-	err := os.MkdirAll(shared.BASE_IMAGE_DIR+"raw", os.ModePerm)
+	err := os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "raw"), os.ModePerm)
 	shared.FailOnError(err, "Could not create images directory")
-	err = os.MkdirAll(shared.BASE_IMAGE_DIR+"compressed", os.ModePerm)
+	err = os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "compressed"), os.ModePerm)
 	shared.FailOnError(err, "Could not create images directory")
 
 	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images")
