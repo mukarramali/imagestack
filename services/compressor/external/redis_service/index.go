@@ -13,9 +13,11 @@ var once sync.Once
 var redisClient *redis.Client
 
 func getClient() *redis.Client {
-	client := redis.NewClient(&redis.Options{
-		Addr: shared.REDIS_URL,
-	})
+	redisOptions, err := redis.ParseURL(shared.REDIS_URL)
+	if err != nil {
+		panic(err)
+	}
+	client := redis.NewClient(redisOptions)
 	return client
 }
 

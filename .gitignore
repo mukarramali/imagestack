@@ -1,3 +1,4 @@
 data/images/*
 data/redis/*
 data/rabbitmq/*
+.env

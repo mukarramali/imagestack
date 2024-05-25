@@ -30,6 +30,6 @@ services:
       - ./data/rabbitmq/log:/var/log/rabbitmq
     healthcheck:
       test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
-      interval: 5s
+      interval: 10s
       timeout: 10s
       retries: 5
