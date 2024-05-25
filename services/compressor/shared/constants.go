@@ -19,5 +19,5 @@ func init() {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
 	REDIS_URL = os.Getenv("REDIS_URL")
-	RABBITMQ_URL = "amqp://user:password@localhost:5672/"
+	RABBITMQ_URL = os.Getenv("RABBITMQ_URL")
 }

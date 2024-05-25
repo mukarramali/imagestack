@@ -5,6 +5,7 @@ services:
       target: final
     environment:
       REDIS_URL: "redis://6379"
+      RABBITMQ_URL: "amqp://user:password@localhost:5672/"
     ports:
       - 8080:8080
     volumes:
