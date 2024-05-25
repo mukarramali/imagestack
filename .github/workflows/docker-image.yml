@@ -1,0 +1,23 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: |
+        cd services/compressor
+        docker build . --target final --tag mukarramali98/imagestack:latest
+    - name: Docker Login
+      uses: docker/login-action@v3.1.0
+      with:
+        registry: mukarramali98/imagestack
+        username: mukarramali98
+        password: ${{secrets.DOCKER_PASSWORD}}
+        ecr: false
+    - name: Push the Docker image
+      run: docker push mukarramali98/imagestack:latest
