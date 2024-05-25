@@ -107,7 +107,14 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Healthy"))
+}
+
 func main() {
 	http.HandleFunc("/", submitHandler)
+	http.HandleFunc("/health", healthCheckHandler)
 	http.ListenAndServe(":8080", nil)
 }
