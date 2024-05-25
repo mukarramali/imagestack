@@ -6,7 +6,7 @@ services:
     environment:
       REDIS_URL: "redis://redis:6379"
       RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
-      BASE_IMAGE_DIR: "/data/images"
+      BASE_IMAGE_DIR: "/data/images/"
     ports:
       - 8080:8080
     volumes:
