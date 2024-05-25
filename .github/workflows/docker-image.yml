@@ -15,7 +15,6 @@ jobs:
     - name: Docker Login
       uses: docker/login-action@v3.1.0
       with:
-        registry: mukarramali98/imagestack
         username: mukarramali98
         password: ${{secrets.DOCKER_PASSWORD}}
         ecr: false
