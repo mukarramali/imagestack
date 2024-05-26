@@ -2,6 +2,10 @@
 
 Service to compress images on the fly
 
+Try out here:
+
+https://imagestack-latest.sliplane.app/?quality=99&width=800&url=https://raw.githubusercontent.com/mukarramali/imagestack/main/docs/ImageStack.png
+
 ## Development
 
 ### Architecture
