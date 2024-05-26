@@ -19,29 +19,29 @@ type request struct {
 	Status               string `json:"status"`
 }
 
-func SetStatus(id string, status string) (*request, error) {
+func SetStatus(id string, status string, redisUrl string) (*request, error) {
 	fieldsToUpdate := map[string]interface{}{
 		"status": status,
 	}
-	return updateRequest(id, fieldsToUpdate)
+	return updateRequest(id, fieldsToUpdate, redisUrl)
 }
 
-func SetLocalPathUnOptimized(id string, path string) (*request, error) {
+func SetLocalPathUnOptimized(id string, path string, redisUrl string) (*request, error) {
 	fieldsToUpdate := map[string]interface{}{
 		"localPathUnOptimized": path,
 	}
-	return updateRequest(id, fieldsToUpdate)
+	return updateRequest(id, fieldsToUpdate, redisUrl)
 }
 
-func SetLocalPathOptimized(id string, path string) (*request, error) {
+func SetLocalPathOptimized(id string, path string, redisUrl string) (*request, error) {
 	fieldsToUpdate := map[string]interface{}{
 		"localPathOptimized": path,
 	}
-	return updateRequest(id, fieldsToUpdate)
+	return updateRequest(id, fieldsToUpdate, redisUrl)
 }
 
-func NewRequest(url string, quality int, width int) (string, error) {
-	redisService := redis_service.GetRedisService()
+func NewRequest(url string, quality int, width int, redisUrl string) (string, error) {
+	redisService := redis_service.GetRedisService(redisUrl)
 	newId := uuid.New().String()
 	data := &request{
 		Url:     url,
@@ -61,8 +61,8 @@ func NewRequest(url string, quality int, width int) (string, error) {
 	return newId, err
 }
 
-func updateRequest(id string, fields map[string]interface{}) (*request, error) {
-	redisService := redis_service.GetRedisService()
+func updateRequest(id string, fields map[string]interface{}, redisUrl string) (*request, error) {
+	redisService := redis_service.GetRedisService(redisUrl)
 	val, err := redisService.Get(context.Background(), id).Result()
 	if err != nil {
 		return nil, err
@@ -99,8 +99,8 @@ func updateRequest(id string, fields map[string]interface{}) (*request, error) {
 	return &data, nil
 }
 
-func GetRequest(id string) (*request, error) {
-	redisService := redis_service.GetRedisService()
+func GetRequest(id string, redisUrl string) (*request, error) {
+	redisService := redis_service.GetRedisService(redisUrl)
 	val, err := redisService.Get(context.Background(), id).Result()
 	if err != nil {
 		return nil, err
@@ -114,8 +114,8 @@ func GetRequest(id string) (*request, error) {
 	return &data, nil
 }
 
-func GetRequestByUrl(url string) (*request, error) {
-	redisService := redis_service.GetRedisService()
+func GetRequestByUrl(url string, redisUrl string) (*request, error) {
+	redisService := redis_service.GetRedisService(redisUrl)
 	if redisService == nil {
 		return nil, errors.New("redis service not available")
 	}

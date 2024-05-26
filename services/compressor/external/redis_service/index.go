@@ -1,7 +1,6 @@
 package redis_service
 
 import (
-	"compressor/shared"
 	"context"
 	"fmt"
 	"sync"
@@ -12,8 +11,8 @@ import (
 var once sync.Once
 var redisClient *redis.Client
 
-func getClient() *redis.Client {
-	redisOptions, err := redis.ParseURL(shared.REDIS_URL)
+func getClient(redisUrl string) *redis.Client {
+	redisOptions, err := redis.ParseURL(redisUrl)
 	if err != nil {
 		panic(err)
 	}
@@ -21,9 +20,9 @@ func getClient() *redis.Client {
 	return client
 }
 
-func GetRedisService() *redis.Client {
+func GetRedisService(redisUrl string) *redis.Client {
 	once.Do(func() {
-		redisClient = getClient()
+		redisClient = getClient(redisUrl)
 
 		_, err := redisClient.Ping(context.Background()).Result()
 		if err != nil {

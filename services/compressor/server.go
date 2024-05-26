@@ -37,7 +37,7 @@ func init() {
 
 	go downloadQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
-		request, _ := identifier.GetRequest(requestId)
+		request, _ := identifier.GetRequest(requestId, shared.REDIS_URL)
 
 		// download image
 		localPath := filepath.Join(shared.BASE_IMAGE_DIR, "raw", fmt.Sprintf("%s.jpg", requestId))
@@ -45,14 +45,14 @@ func init() {
 		lib.FailOnError(err, "Could not download image")
 
 		// update request with local un optimized image path
-		identifier.SetLocalPathUnOptimized(requestId, localPath)
+		identifier.SetLocalPathUnOptimized(requestId, localPath, shared.REDIS_URL)
 
 		// send event for compressing
 		compressQueueService.Publish(requestId)
 	})
 	go compressQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
-		request, _ := identifier.GetRequest(requestId)
+		request, _ := identifier.GetRequest(requestId, shared.REDIS_URL)
 
 		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", requestId))
 
@@ -63,20 +63,20 @@ func init() {
 			lib.FailOnError(err, "Could not compress image")
 		}
 
-		identifier.SetLocalPathOptimized(requestId, outputPath)
+		identifier.SetLocalPathOptimized(requestId, outputPath, shared.REDIS_URL)
 
 		// send event for cleanup
 		cleanupQueueService.Publish(requestId)
 	})
 	go cleanupQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
-		request, _ := identifier.GetRequest(requestId)
+		request, _ := identifier.GetRequest(requestId, shared.REDIS_URL)
 		err := os.Remove(request.LocalPathUnOptimized)
 		lib.FailOnError(err, "Couldn't delete uncompressed image")
-		identifier.SetStatus(requestId, "completed")
+		identifier.SetStatus(requestId, "completed", shared.REDIS_URL)
 	})
 
-	go redis_service.GetRedisService()
+	go redis_service.GetRedisService(shared.REDIS_URL)
 }
 
 func setHeaders(w *http.ResponseWriter) {
@@ -102,13 +102,13 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	setHeaders(&w)
 
-	existingRequest, _ := identifier.GetRequestByUrl(url)
+	existingRequest, _ := identifier.GetRequestByUrl(url, shared.REDIS_URL)
 	if existingRequest != nil && existingRequest.Quality == quality && existingRequest.Width == width {
 		http.ServeFile(w, r, existingRequest.LocalPathOptimized)
 		return
 	}
 
-	imageId, _ := identifier.NewRequest(url, quality, width)
+	imageId, _ := identifier.NewRequest(url, quality, width, shared.REDIS_URL)
 
 	downloadQueueService.Publish(imageId)
 
