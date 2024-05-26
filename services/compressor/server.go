@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/rabbitmq/amqp091-go"
@@ -55,7 +56,7 @@ func init() {
 		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", requestId))
 
 		// compress
-		err := compress.CompressImage(request.LocalPathUnOptimized, outputPath)
+		err := compress.CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality)
 
 		if err != nil {
 			shared.FailOnError(err, "Could not compress image")
@@ -79,6 +80,13 @@ func init() {
 
 func submitHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.FormValue("url")
+	quality, _ := strconv.Atoi(r.FormValue("quality"))
+	if quality == 0 {
+		quality = 10
+	}
+	if quality > 100 {
+		quality = 100
+	}
 	if url == "" {
 		http.Error(w, "URL is required", http.StatusBadRequest)
 		return
@@ -90,7 +98,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	imageId, _ := identifier.NewRequest(url)
+	imageId, _ := identifier.NewRequest(url, quality)
 
 	downloadQueueService.Publish(imageId)
 

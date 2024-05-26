@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func CompressImage(inputPath string, outputPath string) error {
+func CompressImage(inputPath string, outputPath string, quality int) error {
 	file, err := os.Open(inputPath)
 	if err != nil {
 		return err
@@ -25,6 +25,6 @@ func CompressImage(inputPath string, outputPath string) error {
 	defer outFile.Close()
 
 	var opts jpeg.Options
-	opts.Quality = 10
+	opts.Quality = quality
 	return jpeg.Encode(outFile, img, &opts)
 }

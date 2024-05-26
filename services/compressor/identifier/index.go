@@ -2,6 +2,7 @@ package identifier
 
 import (
 	"compressor/external/redis_service"
+	"compressor/shared"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 
 type request struct {
 	Url                  string `json:"url"`
+	Quality              int    `json:"quality"`
 	LocalPathUnOptimized string `json:"localPathUnOptimized"`
 	LocalPathOptimized   string `json:"localPathOptimized"`
 	Status               string `json:"status"`
@@ -37,18 +39,20 @@ func SetLocalPathOptimized(id string, path string) (*request, error) {
 	return updateRequest(id, fieldsToUpdate)
 }
 
-func NewRequest(url string) (string, error) {
+func NewRequest(url string, quality int) (string, error) {
 	redisService := redis_service.GetRedisService()
 	newId := uuid.New().String()
 	data := &request{
-		Url:    url,
-		Status: "requested",
+		Url:     url,
+		Status:  "requested",
+		Quality: quality,
 	}
 
 	// Serialize the struct to JSON
 	dataJson, _ := json.Marshal(data)
 	// Save the data for the image id
 	err := redisService.Set(context.Background(), newId, dataJson, 0).Err()
+	shared.FailOnError(err, "Couldn't created request in redis")
 
 	// Save the mapping from url to id
 	err = redisService.Set(context.Background(), url, newId, 0).Err()
