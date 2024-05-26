@@ -6,7 +6,7 @@ import (
 	"github.com/h2non/bimg"
 )
 
-func CompressImage(inputPath string, outputPath string, quality int) error {
+func CompressImage(inputPath string, outputPath string, quality int, width int) error {
 	buffer, err := bimg.Read(inputPath)
 	if err != nil {
 		return err
@@ -14,6 +14,10 @@ func CompressImage(inputPath string, outputPath string, quality int) error {
 
 	options := bimg.Options{
 		Quality: quality,
+	}
+
+	if width > 0 {
+		options.Width = width
 	}
 
 	newImage, err := bimg.NewImage(buffer).Process(options)

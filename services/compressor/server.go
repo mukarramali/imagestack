@@ -56,7 +56,7 @@ func init() {
 		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", requestId))
 
 		// compress
-		err := compress.CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality)
+		err := compress.CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
 
 		if err != nil {
 			shared.FailOnError(err, "Could not compress image")
@@ -88,6 +88,7 @@ func setHeaders(w *http.ResponseWriter) {
 func submitHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.FormValue("url")
 	quality, _ := strconv.Atoi(r.FormValue("quality"))
+	width, _ := strconv.Atoi(r.FormValue("width"))
 	if quality == 0 {
 		quality = 10
 	}
@@ -101,18 +102,18 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	setHeaders(&w)
 
 	existingRequest, _ := identifier.GetRequestByUrl(url)
-	if existingRequest != nil && existingRequest.Quality == quality {
+	if existingRequest != nil && existingRequest.Quality == quality && existingRequest.Width == width {
 		http.ServeFile(w, r, existingRequest.LocalPathOptimized)
 		return
 	}
 
-	imageId, _ := identifier.NewRequest(url, quality)
+	imageId, _ := identifier.NewRequest(url, quality, width)
 
 	downloadQueueService.Publish(imageId)
 
 	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
 
-	if shared.WaitForFile(futureUrl, 10*time.Second) {
+	if shared.WaitForFile(futureUrl, 15*time.Second) {
 		fmt.Println("Image compressed" + futureUrl)
 		http.ServeFile(w, r, futureUrl)
 	} else {

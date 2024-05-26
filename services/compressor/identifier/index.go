@@ -13,6 +13,7 @@ import (
 type request struct {
 	Url                  string `json:"url"`
 	Quality              int    `json:"quality"`
+	Width                int    `json:"width"`
 	LocalPathUnOptimized string `json:"localPathUnOptimized"`
 	LocalPathOptimized   string `json:"localPathOptimized"`
 	Status               string `json:"status"`
@@ -39,13 +40,14 @@ func SetLocalPathOptimized(id string, path string) (*request, error) {
 	return updateRequest(id, fieldsToUpdate)
 }
 
-func NewRequest(url string, quality int) (string, error) {
+func NewRequest(url string, quality int, width int) (string, error) {
 	redisService := redis_service.GetRedisService()
 	newId := uuid.New().String()
 	data := &request{
 		Url:     url,
 		Status:  "requested",
 		Quality: quality,
+		Width:   width,
 	}
 
 	// Serialize the struct to JSON
