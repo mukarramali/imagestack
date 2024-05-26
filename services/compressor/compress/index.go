@@ -2,37 +2,28 @@ package compress
 
 import (
 	"fmt"
-	"image"
-	"image/jpeg"
-	_ "image/png"
-	"os"
 
-	_ "golang.org/x/image/bmp"
-	_ "golang.org/x/image/tiff"
-	_ "golang.org/x/image/webp"
+	"github.com/h2non/bimg"
 )
 
 func CompressImage(inputPath string, outputPath string, quality int) error {
-	file, err := os.Open(inputPath)
+	buffer, err := bimg.Read(inputPath)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
 
-	img, format, err := image.Decode(file)
-
-	if err != nil {
-		fmt.Printf("image compression failed for format %s with error:%s", format, err)
-		return err
+	options := bimg.Options{
+		Quality: quality,
 	}
 
-	outFile, err := os.Create(outputPath)
+	newImage, err := bimg.NewImage(buffer).Process(options)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to process image: %v", err)
 	}
-	defer outFile.Close()
 
-	var opts jpeg.Options
-	opts.Quality = quality
-	return jpeg.Encode(outFile, img, &opts)
+	err = bimg.Write(outputPath, newImage)
+	if err != nil {
+		return fmt.Errorf("failed to write output image: %v", err)
+	}
+	return nil
 }

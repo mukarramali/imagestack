@@ -4,10 +4,10 @@ go 1.21.6
 
 require (
 	github.com/google/uuid v1.6.0
+	github.com/h2non/bimg v1.1.9
 	github.com/joho/godotenv v1.5.1
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.5.1
-	golang.org/x/image v0.16.0
 )
 
 require (
