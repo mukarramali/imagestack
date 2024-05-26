@@ -78,6 +78,13 @@ func init() {
 	go redis_service.GetRedisService()
 }
 
+func setHeaders(w *http.ResponseWriter) {
+	(*w).Header().Set("Content-Type", "image/webp")
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "*")
+	(*w).Header().Set("Cache-Control", "public, max-age=15")
+}
+
 func submitHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.FormValue("url")
 	quality, _ := strconv.Atoi(r.FormValue("quality"))
@@ -91,6 +98,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "URL is required", http.StatusBadRequest)
 		return
 	}
+	setHeaders(&w)
 
 	existingRequest, _ := identifier.GetRequestByUrl(url)
 	if existingRequest != nil {
@@ -106,10 +114,6 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	if shared.WaitForFile(futureUrl, 5*time.Second) {
 		fmt.Println("Image compressed" + futureUrl)
-		w.Header().Set("Content-Type", "image/webp")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "*")
-		w.Header().Set("Cache-Control", "public, max-age=5")
 		http.ServeFile(w, r, futureUrl)
 	} else {
 		fmt.Println("File could not be generated in time for " + url)
