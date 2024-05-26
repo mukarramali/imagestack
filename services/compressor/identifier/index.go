@@ -4,10 +4,10 @@ import (
 	"compressor/external/redis_service"
 	"context"
 	"encoding/json"
-	"errors"
 	"imagestack/lib"
 
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 type request struct {
@@ -19,29 +19,40 @@ type request struct {
 	Status               string `json:"status"`
 }
 
-func SetStatus(id string, status string, redisUrl string) (*request, error) {
+type RequestService struct {
+	redisUrl     string
+	redisService *redis.Client
+}
+
+func NewRequestService(redisUrl string) *RequestService {
+	return &RequestService{
+		redisUrl:     redisUrl,
+		redisService: redis_service.GetRedisService(redisUrl),
+	}
+}
+
+func (service *RequestService) SetStatus(id string, status string) (*request, error) {
 	fieldsToUpdate := map[string]interface{}{
 		"status": status,
 	}
-	return updateRequest(id, fieldsToUpdate, redisUrl)
+	return service.updateRequest(id, fieldsToUpdate)
 }
 
-func SetLocalPathUnOptimized(id string, path string, redisUrl string) (*request, error) {
+func (service *RequestService) SetLocalPathUnOptimized(id string, path string) (*request, error) {
 	fieldsToUpdate := map[string]interface{}{
 		"localPathUnOptimized": path,
 	}
-	return updateRequest(id, fieldsToUpdate, redisUrl)
+	return service.updateRequest(id, fieldsToUpdate)
 }
 
-func SetLocalPathOptimized(id string, path string, redisUrl string) (*request, error) {
+func (service *RequestService) SetLocalPathOptimized(id string, path string) (*request, error) {
 	fieldsToUpdate := map[string]interface{}{
 		"localPathOptimized": path,
 	}
-	return updateRequest(id, fieldsToUpdate, redisUrl)
+	return service.updateRequest(id, fieldsToUpdate)
 }
 
-func NewRequest(url string, quality int, width int, redisUrl string) (string, error) {
-	redisService := redis_service.GetRedisService(redisUrl)
+func (service *RequestService) NewRequest(url string, quality int, width int) (string, error) {
 	newId := uuid.New().String()
 	data := &request{
 		Url:     url,
@@ -53,17 +64,16 @@ func NewRequest(url string, quality int, width int, redisUrl string) (string, er
 	// Serialize the struct to JSON
 	dataJson, _ := json.Marshal(data)
 	// Save the data for the image id
-	err := redisService.Set(context.Background(), newId, dataJson, 0).Err()
+	err := service.redisService.Set(context.Background(), newId, dataJson, 0).Err()
 	lib.FailOnError(err, "Couldn't created request in redis")
 
 	// Save the mapping from url to id
-	err = redisService.Set(context.Background(), url, newId, 0).Err()
+	err = service.redisService.Set(context.Background(), url, newId, 0).Err()
 	return newId, err
 }
 
-func updateRequest(id string, fields map[string]interface{}, redisUrl string) (*request, error) {
-	redisService := redis_service.GetRedisService(redisUrl)
-	val, err := redisService.Get(context.Background(), id).Result()
+func (service *RequestService) updateRequest(id string, fields map[string]interface{}) (*request, error) {
+	val, err := service.redisService.Get(context.Background(), id).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +101,7 @@ func updateRequest(id string, fields map[string]interface{}, redisUrl string) (*
 		return nil, err
 	}
 
-	err = redisService.Set(context.Background(), id, updatedDataJson, 0).Err()
+	err = service.redisService.Set(context.Background(), id, updatedDataJson, 0).Err()
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +109,8 @@ func updateRequest(id string, fields map[string]interface{}, redisUrl string) (*
 	return &data, nil
 }
 
-func GetRequest(id string, redisUrl string) (*request, error) {
-	redisService := redis_service.GetRedisService(redisUrl)
-	val, err := redisService.Get(context.Background(), id).Result()
+func (service *RequestService) GetRequest(id string) (*request, error) {
+	val, err := service.redisService.Get(context.Background(), id).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -114,15 +123,11 @@ func GetRequest(id string, redisUrl string) (*request, error) {
 	return &data, nil
 }
 
-func GetRequestByUrl(url string, redisUrl string) (*request, error) {
-	redisService := redis_service.GetRedisService(redisUrl)
-	if redisService == nil {
-		return nil, errors.New("redis service not available")
-	}
-	id, err := redisService.Get(context.Background(), url).Result()
+func (service *RequestService) GetRequestByUrl(url string) (*request, error) {
+	id, err := service.redisService.Get(context.Background(), url).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	return GetRequest(id)
+	return service.GetRequest(id)
 }
