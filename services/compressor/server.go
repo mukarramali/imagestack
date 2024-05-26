@@ -101,7 +101,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	setHeaders(&w)
 
 	existingRequest, _ := identifier.GetRequestByUrl(url)
-	if existingRequest != nil {
+	if existingRequest != nil && existingRequest.Quality == quality {
 		http.ServeFile(w, r, existingRequest.LocalPathOptimized)
 		return
 	}
@@ -112,7 +112,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
 
-	if shared.WaitForFile(futureUrl, 5*time.Second) {
+	if shared.WaitForFile(futureUrl, 10*time.Second) {
 		fmt.Println("Image compressed" + futureUrl)
 		http.ServeFile(w, r, futureUrl)
 	} else {
