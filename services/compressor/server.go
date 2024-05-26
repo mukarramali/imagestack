@@ -27,9 +27,9 @@ var (
 
 func init() {
 	err := os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "raw"), os.ModePerm)
-	shared.FailOnError(err, "Could not create images directory")
+	lib.FailOnError(err, "Could not create images directory")
 	err = os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "compressed"), os.ModePerm)
-	shared.FailOnError(err, "Could not create images directory")
+	lib.FailOnError(err, "Could not create images directory")
 
 	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images")
 	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images")
@@ -42,7 +42,7 @@ func init() {
 		// download image
 		localPath := filepath.Join(shared.BASE_IMAGE_DIR, "raw", fmt.Sprintf("%s.jpg", requestId))
 		err := lib.DownloadImage(request.Url, localPath)
-		shared.FailOnError(err, "Could not download image")
+		lib.FailOnError(err, "Could not download image")
 
 		// update request with local un optimized image path
 		identifier.SetLocalPathUnOptimized(requestId, localPath)
@@ -60,7 +60,7 @@ func init() {
 		err := compress.CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
 
 		if err != nil {
-			shared.FailOnError(err, "Could not compress image")
+			lib.FailOnError(err, "Could not compress image")
 		}
 
 		identifier.SetLocalPathOptimized(requestId, outputPath)
@@ -72,7 +72,7 @@ func init() {
 		requestId := string(msg.Body)
 		request, _ := identifier.GetRequest(requestId)
 		err := os.Remove(request.LocalPathUnOptimized)
-		shared.FailOnError(err, "Couldn't delete uncompressed image")
+		lib.FailOnError(err, "Couldn't delete uncompressed image")
 		identifier.SetStatus(requestId, "completed")
 	})
 

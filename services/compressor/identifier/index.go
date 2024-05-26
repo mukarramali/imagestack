@@ -2,10 +2,10 @@ package identifier
 
 import (
 	"compressor/external/redis_service"
-	"compressor/shared"
 	"context"
 	"encoding/json"
 	"errors"
+	"imagestack/lib"
 
 	"github.com/google/uuid"
 )
@@ -54,7 +54,7 @@ func NewRequest(url string, quality int, width int) (string, error) {
 	dataJson, _ := json.Marshal(data)
 	// Save the data for the image id
 	err := redisService.Set(context.Background(), newId, dataJson, 0).Err()
-	shared.FailOnError(err, "Couldn't created request in redis")
+	lib.FailOnError(err, "Couldn't created request in redis")
 
 	// Save the mapping from url to id
 	err = redisService.Set(context.Background(), url, newId, 0).Err()
