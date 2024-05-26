@@ -114,7 +114,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
 
-	if shared.WaitForFile(futureUrl, 15*time.Second) {
+	if lib.WaitForFile(futureUrl, 15*time.Second) {
 		fmt.Println("Image compressed" + futureUrl)
 		http.ServeFile(w, r, futureUrl)
 	} else {
