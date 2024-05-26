@@ -1,9 +1,15 @@
 package compress
 
 import (
+	"fmt"
 	"image"
 	"image/jpeg"
+	_ "image/png"
 	"os"
+
+	_ "golang.org/x/image/bmp"
+	_ "golang.org/x/image/tiff"
+	_ "golang.org/x/image/webp"
 )
 
 func CompressImage(inputPath string, outputPath string, quality int) error {
@@ -13,8 +19,10 @@ func CompressImage(inputPath string, outputPath string, quality int) error {
 	}
 	defer file.Close()
 
-	img, _, err := image.Decode(file)
+	img, format, err := image.Decode(file)
+
 	if err != nil {
+		fmt.Printf("image compression failed for format %s with error:%s", format, err)
 		return err
 	}
 
