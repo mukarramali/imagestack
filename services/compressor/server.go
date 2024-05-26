@@ -5,7 +5,6 @@ import (
 	"compressor/external/rabbitmq_service"
 	"compressor/external/redis_service"
 	"compressor/identifier"
-	"compressor/load"
 	"compressor/shared"
 	"fmt"
 	"net/http"
@@ -13,6 +12,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"imagestack/lib"
 
 	"github.com/rabbitmq/amqp091-go"
 )
@@ -40,7 +41,7 @@ func init() {
 
 		// download image
 		localPath := filepath.Join(shared.BASE_IMAGE_DIR, "raw", fmt.Sprintf("%s.jpg", requestId))
-		err := load.DownloadImage(request.Url, localPath)
+		err := lib.DownloadImage(request.Url, localPath)
 		shared.FailOnError(err, "Could not download image")
 
 		// update request with local un optimized image path
