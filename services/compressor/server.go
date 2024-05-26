@@ -82,7 +82,7 @@ func setHeaders(w *http.ResponseWriter) {
 	(*w).Header().Set("Content-Type", "image/webp")
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Methods", "*")
-	(*w).Header().Set("Cache-Control", "public, max-age=15")
+	(*w).Header().Set("Cache-Control", "public, max-age=4320")
 }
 
 func submitHandler(w http.ResponseWriter, r *http.Request) {
