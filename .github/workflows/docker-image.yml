@@ -8,14 +8,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build the Docker image
-        run: |
-          docker build . --target final --tag mukarramali98/imagestack:latest
       - name: Docker Login
         uses: docker/login-action@v3.1.0
         with:
           username: mukarramali98
           password: ${{secrets.DOCKER_PASSWORD}}
           ecr: false
-      - name: Push the Docker image
-        run: docker push mukarramali98/imagestack:latest
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          file: services/compressor/Dockerfile
+          push: true
+          tags: mukarramali98/imagestack:latest
+          target: final
