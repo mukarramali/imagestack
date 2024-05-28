@@ -2,17 +2,18 @@ package main
 
 import (
 	"compressor/compress"
-	"compressor/external/rabbitmq_service"
-	"compressor/request"
 	"compressor/shared"
 	"fmt"
+	"imagestack/lib/rabbitmq_service"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 
-	"imagestack/lib"
+	"imagestack/lib/error_handler"
+	"imagestack/lib/file_handler"
+	"imagestack/lib/request"
 
 	"github.com/rabbitmq/amqp091-go"
 )
@@ -26,13 +27,13 @@ var (
 
 func init() {
 	err := os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "raw"), os.ModePerm)
-	lib.FailOnError(err, "Could not create images directory")
+	error_handler.FailOnError(err, "Could not create images directory")
 	err = os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "compressed"), os.ModePerm)
-	lib.FailOnError(err, "Could not create images directory")
+	error_handler.FailOnError(err, "Could not create images directory")
 
-	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images")
-	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images")
-	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images")
+	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images", shared.RABBITMQ_URL)
+	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images", shared.RABBITMQ_URL)
+	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images", shared.RABBITMQ_URL)
 
 	redisService := request.NewRequestService(shared.REDIS_URL)
 
@@ -42,8 +43,8 @@ func init() {
 
 		// download image
 		localPath := filepath.Join(shared.BASE_IMAGE_DIR, "raw", fmt.Sprintf("%s.jpg", requestId))
-		err := lib.DownloadImage(request.Url, localPath)
-		lib.FailOnError(err, "Could not download image")
+		err := file_handler.DownloadImage(request.Url, localPath)
+		error_handler.FailOnError(err, "Could not download image")
 
 		// update request with local un optimized image path
 		redisService.SetLocalPathUnOptimized(requestId, localPath)
@@ -61,7 +62,7 @@ func init() {
 		err := compress.CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
 
 		if err != nil {
-			lib.FailOnError(err, "Could not compress image")
+			error_handler.FailOnError(err, "Could not compress image")
 		}
 
 		redisService.SetLocalPathOptimized(requestId, outputPath)
@@ -73,7 +74,7 @@ func init() {
 		requestId := string(msg.Body)
 		request, _ := redisService.GetRequest(requestId)
 		err := os.Remove(request.LocalPathUnOptimized)
-		lib.FailOnError(err, "Couldn't delete uncompressed image")
+		error_handler.FailOnError(err, "Couldn't delete uncompressed image")
 		redisService.SetStatus(requestId, "completed")
 	})
 }
@@ -114,7 +115,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 
 	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
 
-	if lib.WaitForFile(futureUrl, 15*time.Second) {
+	if file_handler.WaitForFile(futureUrl, 15*time.Second) {
 		fmt.Println("Image compressed" + futureUrl)
 		http.ServeFile(w, r, futureUrl)
 	} else {

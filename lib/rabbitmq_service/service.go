@@ -1,7 +1,7 @@
 package rabbitmq_service
 
 import (
-	"imagestack/lib"
+	"imagestack/lib/error_handler"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -11,8 +11,8 @@ type RabbitMqService struct {
 	queue  *amqp.Queue
 }
 
-func NewRabbitMqService(queueName string) *RabbitMqService {
-	client := getClient()
+func NewRabbitMqService(queueName string, amqpUrl string) *RabbitMqService {
+	client := getClient(amqpUrl)
 	queue, err := client.QueueDeclare(
 		queueName,
 		true,
@@ -22,7 +22,7 @@ func NewRabbitMqService(queueName string) *RabbitMqService {
 		nil,
 	)
 
-	lib.FailOnError(err, "Failed to create a queue")
+	error_handler.FailOnError(err, "Failed to create a queue")
 	return &RabbitMqService{
 		client: client,
 		queue:  &queue,

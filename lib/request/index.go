@@ -1,10 +1,10 @@
 package request
 
 import (
-	"compressor/external/redis_service"
 	"context"
 	"encoding/json"
-	"imagestack/lib"
+	"imagestack/lib/error_handler"
+	"imagestack/lib/redis_service"
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -65,7 +65,7 @@ func (service *RequestService) NewRequest(url string, quality int, width int) (s
 	dataJson, _ := json.Marshal(data)
 	// Save the data for the image id
 	err := service.redisService.Set(context.Background(), newId, dataJson, 0).Err()
-	lib.FailOnError(err, "Couldn't created request in redis")
+	error_handler.FailOnError(err, "Couldn't created request in redis")
 
 	// Save the mapping from url to id
 	err = service.redisService.Set(context.Background(), url, newId, 0).Err()

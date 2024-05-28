@@ -1,4 +1,4 @@
-package lib
+package file_handler
 
 import (
 	"os"

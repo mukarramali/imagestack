@@ -1,4 +1,4 @@
-package lib
+package error_handler
 
 import "log"
 

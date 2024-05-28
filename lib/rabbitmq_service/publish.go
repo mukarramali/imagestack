@@ -2,7 +2,7 @@ package rabbitmq_service
 
 import (
 	"context"
-	"imagestack/lib"
+	"imagestack/lib/error_handler"
 	"log"
 	"time"
 
@@ -22,6 +22,6 @@ func (rs *RabbitMqService) Publish(body string) {
 			ContentType: "text/plain",
 			Body:        []byte(body),
 		})
-	lib.FailOnError(err, "Failed to publish a message")
+	error_handler.FailOnError(err, "Failed to publish a message")
 	log.Printf(" [x] Sent %s\n", body)
 }
