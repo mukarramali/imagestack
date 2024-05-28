@@ -1,8 +1,8 @@
 package rabbitmq_service
 
 import (
-	"compressor/shared"
 	"context"
+	"imagestack/lib"
 	"log"
 	"time"
 
@@ -22,6 +22,6 @@ func (rs *RabbitMqService) Publish(body string) {
 			ContentType: "text/plain",
 			Body:        []byte(body),
 		})
-	shared.FailOnError(err, "Failed to publish a message")
+	lib.FailOnError(err, "Failed to publish a message")
 	log.Printf(" [x] Sent %s\n", body)
 }

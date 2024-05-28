@@ -1,7 +1,7 @@
 package rabbitmq_service
 
 import (
-	"compressor/shared"
+	"imagestack/lib"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -22,7 +22,7 @@ func NewRabbitMqService(queueName string) *RabbitMqService {
 		nil,
 	)
 
-	shared.FailOnError(err, "Failed to create a queue")
+	lib.FailOnError(err, "Failed to create a queue")
 	return &RabbitMqService{
 		client: client,
 		queue:  &queue,

@@ -1,7 +1,8 @@
 services:
   compressor:
     build:
-      context: services/compressor
+      context: .
+      dockerfile: services/compressor/Dockerfile
       target: final
     environment:
       REDIS_URL: "redis://redis:6379"

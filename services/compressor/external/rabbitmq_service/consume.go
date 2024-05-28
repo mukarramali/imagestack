@@ -1,7 +1,7 @@
 package rabbitmq_service
 
 import (
-	"compressor/shared"
+	"imagestack/lib"
 	"log"
 
 	"github.com/rabbitmq/amqp091-go"
@@ -17,7 +17,7 @@ func (rs *RabbitMqService) Consume(handler func(msg amqp091.Delivery)) {
 		false,         // no-wait
 		nil,           // args
 	)
-	shared.FailOnError(err, "Failed to register a consumer")
+	lib.FailOnError(err, "Failed to register a consumer")
 
 	var forever chan struct{}
 

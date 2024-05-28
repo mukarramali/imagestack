@@ -7,14 +7,18 @@ FROM golang:${GO_VERSION} AS build
 # Install libvips
 RUN apt-get update && apt-get install -y libvips-dev
 
+# Copy library
+WORKDIR /lib
+COPY lib /lib
+
 WORKDIR /src
 
 # Download dependencies
-COPY go.mod go.sum ./
-RUN go mod download
+COPY services/compressor/go.mod services/compressor/go.sum ./
+RUN go mod tidy
 
 # Copy the source code
-COPY . .
+COPY services/compressor .
 
 # Build the application
 RUN CGO_ENABLED=1 go build -o /bin/server .

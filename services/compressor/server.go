@@ -3,9 +3,7 @@ package main
 import (
 	"compressor/compress"
 	"compressor/external/rabbitmq_service"
-	"compressor/external/redis_service"
 	"compressor/identifier"
-	"compressor/load"
 	"compressor/shared"
 	"fmt"
 	"net/http"
@@ -13,6 +11,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"imagestack/lib"
 
 	"github.com/rabbitmq/amqp091-go"
 )
@@ -26,32 +26,34 @@ var (
 
 func init() {
 	err := os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "raw"), os.ModePerm)
-	shared.FailOnError(err, "Could not create images directory")
+	lib.FailOnError(err, "Could not create images directory")
 	err = os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "compressed"), os.ModePerm)
-	shared.FailOnError(err, "Could not create images directory")
+	lib.FailOnError(err, "Could not create images directory")
 
 	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images")
 	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images")
 	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images")
 
+	redisService := identifier.NewRequestService(shared.REDIS_URL)
+
 	go downloadQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
-		request, _ := identifier.GetRequest(requestId)
+		request, _ := redisService.GetRequest(requestId)
 
 		// download image
 		localPath := filepath.Join(shared.BASE_IMAGE_DIR, "raw", fmt.Sprintf("%s.jpg", requestId))
-		err := load.DownloadImage(request.Url, localPath)
-		shared.FailOnError(err, "Could not download image")
+		err := lib.DownloadImage(request.Url, localPath)
+		lib.FailOnError(err, "Could not download image")
 
 		// update request with local un optimized image path
-		identifier.SetLocalPathUnOptimized(requestId, localPath)
+		redisService.SetLocalPathUnOptimized(requestId, localPath)
 
 		// send event for compressing
 		compressQueueService.Publish(requestId)
 	})
 	go compressQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
-		request, _ := identifier.GetRequest(requestId)
+		request, _ := redisService.GetRequest(requestId)
 
 		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", requestId))
 
@@ -59,23 +61,21 @@ func init() {
 		err := compress.CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
 
 		if err != nil {
-			shared.FailOnError(err, "Could not compress image")
+			lib.FailOnError(err, "Could not compress image")
 		}
 
-		identifier.SetLocalPathOptimized(requestId, outputPath)
+		redisService.SetLocalPathOptimized(requestId, outputPath)
 
 		// send event for cleanup
 		cleanupQueueService.Publish(requestId)
 	})
 	go cleanupQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
-		request, _ := identifier.GetRequest(requestId)
+		request, _ := redisService.GetRequest(requestId)
 		err := os.Remove(request.LocalPathUnOptimized)
-		shared.FailOnError(err, "Couldn't delete uncompressed image")
-		identifier.SetStatus(requestId, "completed")
+		lib.FailOnError(err, "Couldn't delete uncompressed image")
+		redisService.SetStatus(requestId, "completed")
 	})
-
-	go redis_service.GetRedisService()
 }
 
 func setHeaders(w *http.ResponseWriter) {
@@ -101,19 +101,20 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	setHeaders(&w)
 
-	existingRequest, _ := identifier.GetRequestByUrl(url)
+	redisService := identifier.NewRequestService(shared.REDIS_URL)
+	existingRequest, _ := redisService.GetRequestByUrl(url)
 	if existingRequest != nil && existingRequest.Quality == quality && existingRequest.Width == width {
 		http.ServeFile(w, r, existingRequest.LocalPathOptimized)
 		return
 	}
 
-	imageId, _ := identifier.NewRequest(url, quality, width)
+	imageId, _ := redisService.NewRequest(url, quality, width)
 
 	downloadQueueService.Publish(imageId)
 
 	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
 
-	if shared.WaitForFile(futureUrl, 15*time.Second) {
+	if lib.WaitForFile(futureUrl, 15*time.Second) {
 		fmt.Println("Image compressed" + futureUrl)
 		http.ServeFile(w, r, futureUrl)
 	} else {
