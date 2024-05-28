@@ -1,4 +1,4 @@
-package identifier
+package request
 
 import (
 	"compressor/external/redis_service"

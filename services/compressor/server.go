@@ -3,7 +3,7 @@ package main
 import (
 	"compressor/compress"
 	"compressor/external/rabbitmq_service"
-	"compressor/identifier"
+	"compressor/request"
 	"compressor/shared"
 	"fmt"
 	"net/http"
@@ -34,7 +34,7 @@ func init() {
 	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images")
 	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images")
 
-	redisService := identifier.NewRequestService(shared.REDIS_URL)
+	redisService := request.NewRequestService(shared.REDIS_URL)
 
 	go downloadQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
@@ -101,7 +101,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	setHeaders(&w)
 
-	redisService := identifier.NewRequestService(shared.REDIS_URL)
+	redisService := request.NewRequestService(shared.REDIS_URL)
 	existingRequest, _ := redisService.GetRequestByUrl(url)
 	if existingRequest != nil && existingRequest.Quality == quality && existingRequest.Width == width {
 		http.ServeFile(w, r, existingRequest.LocalPathOptimized)
