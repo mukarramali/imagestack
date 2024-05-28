@@ -14,11 +14,11 @@ COPY lib /lib
 WORKDIR /src
 
 # Download dependencies
-COPY services/compressor/go.mod services/compressor/go.sum ./
+COPY services/api/go.mod services/api/go.sum ./
 RUN go mod tidy
 
 # Copy the source code
-COPY services/compressor .
+COPY services/api .
 
 # Build the application
 RUN CGO_ENABLED=1 go build -o /bin/server .
