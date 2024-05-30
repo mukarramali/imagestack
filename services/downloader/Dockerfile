@@ -12,11 +12,11 @@ COPY lib /lib
 WORKDIR /src
 
 # Download dependencies
-COPY services/api/go.mod services/api/go.sum ./
+COPY services/downloader/go.mod services/downloader/go.sum ./
 RUN go mod tidy
 
 # Copy the source code
-COPY services/api .
+COPY services/downloader .
 
 # Build the application
 RUN CGO_ENABLED=1 go build -o /bin/server .

@@ -8,21 +8,18 @@ import (
 	"path/filepath"
 
 	"imagestack/lib/error_handler"
-	"imagestack/lib/file_handler"
 	"imagestack/lib/request"
 
 	"github.com/rabbitmq/amqp091-go"
 )
 
 var (
-	downloadQueueService *rabbitmq_service.RabbitMqService
 	compressQueueService *rabbitmq_service.RabbitMqService
 	cleanupQueueService  *rabbitmq_service.RabbitMqService
 	redisService         *request.RequestService
 )
 
 func init() {
-	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images", shared.RABBITMQ_URL)
 	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images", shared.RABBITMQ_URL)
 	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images", shared.RABBITMQ_URL)
 
@@ -30,21 +27,6 @@ func init() {
 }
 
 func RegisterQueues() {
-	go downloadQueueService.Consume(func(msg amqp091.Delivery) {
-		requestId := string(msg.Body)
-		request, _ := redisService.GetRequest(requestId)
-
-		// download image
-		localPath := filepath.Join(shared.BASE_IMAGE_DIR, "raw", fmt.Sprintf("%s.jpg", requestId))
-		err := file_handler.DownloadImage(request.Url, localPath)
-		error_handler.FailOnError(err, "Could not download image")
-
-		// update request with local un optimized image path
-		redisService.SetLocalPathUnOptimized(requestId, localPath)
-
-		// send event for compressing
-		compressQueueService.Publish(requestId)
-	})
 	go compressQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
 		request, _ := redisService.GetRequest(requestId)

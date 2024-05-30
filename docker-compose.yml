@@ -15,6 +15,22 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+  downloader:
+    build:
+      context: .
+      dockerfile: services/downloader/Dockerfile
+      target: final
+    environment:
+      REDIS_URL: "redis://redis:6379"
+      RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
+      BASE_IMAGE_DIR: "/data/images/"
+    ports:
+      - 8082:8080
+    volumes:
+      - ./data/images:/data/images
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
   compressor:
     build:
       context: .
