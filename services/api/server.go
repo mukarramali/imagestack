@@ -77,7 +77,7 @@ func submitHandler(w http.ResponseWriter, r *http.Request) {
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Healthy"))
+	w.Write([]byte("API is Healthy"))
 }
 
 func main() {

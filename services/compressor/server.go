@@ -1,8 +1,8 @@
 package main
 
 import (
-	"compressor/compress"
 	"compressor/shared"
+	"compressor/src"
 	"fmt"
 	"imagestack/lib/rabbitmq_service"
 	"net/http"
@@ -52,7 +52,7 @@ func init() {
 		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", requestId))
 
 		// compress
-		err := compress.CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
+		err := src.CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
 
 		if err != nil {
 			error_handler.FailOnError(err, "Could not compress image")
@@ -75,7 +75,7 @@ func init() {
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Healthy"))
+	w.Write([]byte("Compressor Service is Healthy"))
 }
 
 func main() {

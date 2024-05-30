@@ -1,4 +1,4 @@
-package compress
+package src
 
 import (
 	"fmt"
