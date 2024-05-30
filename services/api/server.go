@@ -1,7 +1,6 @@
 package main
 
 import (
-	"api/shared"
 	"api/src"
 	"net/http"
 	"os"
@@ -11,9 +10,9 @@ import (
 )
 
 func init() {
-	err := os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "raw"), os.ModePerm)
+	err := os.MkdirAll(filepath.Join(src.BASE_IMAGE_DIR, "raw"), os.ModePerm)
 	error_handler.FailOnError(err, "Could not create images directory")
-	err = os.MkdirAll(filepath.Join(shared.BASE_IMAGE_DIR, "compressed"), os.ModePerm)
+	err = os.MkdirAll(filepath.Join(src.BASE_IMAGE_DIR, "compressed"), os.ModePerm)
 	error_handler.FailOnError(err, "Could not create images directory")
 }
 

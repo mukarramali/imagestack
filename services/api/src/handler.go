@@ -1,7 +1,6 @@
 package src
 
 import (
-	"api/shared"
 	"fmt"
 	"imagestack/lib/rabbitmq_service"
 	"net/http"
@@ -19,7 +18,7 @@ var (
 )
 
 func init() {
-	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images", shared.RABBITMQ_URL)
+	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images", RABBITMQ_URL)
 }
 
 func setHeaders(w *http.ResponseWriter) {
@@ -45,7 +44,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	setHeaders(&w)
 
-	redisService := request.NewRequestService(shared.REDIS_URL)
+	redisService := request.NewRequestService(REDIS_URL)
 	existingRequest, _ := redisService.GetRequestByUrl(url)
 	if existingRequest != nil && existingRequest.Quality == quality && existingRequest.Width == width {
 		http.ServeFile(w, r, existingRequest.LocalPathOptimized)
@@ -56,7 +55,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 	downloadQueueService.Publish(imageId)
 
-	futureUrl := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
+	futureUrl := filepath.Join(BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", imageId))
 
 	if file_handler.WaitForFile(futureUrl, 15*time.Second) {
 		fmt.Println("Image compressed" + futureUrl)
