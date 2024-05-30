@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 # Build stage
 ARG GO_VERSION=1.22.3
 FROM golang:${GO_VERSION} AS build

@@ -1,11 +1,9 @@
-# syntax=docker/dockerfile:1
-
 # Build stage
 ARG GO_VERSION=1.22.3
-FROM golang:${GO_VERSION} AS build
+FROM golang:${GO_VERSION}-alpine AS build
 
-# Install libvips
-RUN apt-get update && apt-get install -y libvips-dev
+# Install dependencies for Alpine
+RUN apk add --no-cache gcc musl-dev
 
 # Copy library
 WORKDIR /lib
@@ -24,14 +22,12 @@ COPY services/api .
 RUN CGO_ENABLED=1 go build -o /bin/server .
 
 # Final stage
-FROM debian:latest AS final
+FROM alpine:latest AS final
 
 # Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    libvips \
+RUN apk add --no-cache \
     ca-certificates \
-    tzdata \
-    && update-ca-certificates && rm -rf /var/lib/apt/lists/*
+    tzdata
 
 # Create a non-privileged user
 ARG UID=10001
