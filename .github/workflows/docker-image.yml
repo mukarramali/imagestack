@@ -17,9 +17,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          file: services/api/Dockerfile
+          file: services/downloader/Dockerfile
           push: true
-          tags: mukarramali98/imagestack:latest
+          tags: mukarramali98/imagestack-downloader:latest
           target: final
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -27,4 +27,11 @@ jobs:
           file: services/compressor/Dockerfile
           push: true
           tags: mukarramali98/imagestack-compressor:latest
+          target: final
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          file: services/api/Dockerfile
+          push: true
+          tags: mukarramali98/imagestack:latest
           target: final
