@@ -37,7 +37,9 @@ func RegisterQueues() {
 		err := CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
 
 		if err != nil {
-			error_handler.FailOnError(err, "Could not compress image")
+			// TODO: Report error
+			fmt.Println(err)
+			return
 		}
 
 		redisService.SetLocalPathOptimized(requestId, outputPath)

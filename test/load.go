@@ -14,9 +14,15 @@ var IMAGE_STACK_URL = "https://imagestack-latest.sliplane.app"
 func downloadFile(url string, wg *sync.WaitGroup) {
 	fmt.Println(url)
 	resp, err := http.Get(url)
+
 	if err != nil {
 		fmt.Println("Error fetching:" + url)
 	}
+
+	if resp.Header.Get("X-Cache") == "HIT" {
+		fmt.Println("Cached")
+	}
+
 	resp.Body.Close()
 	wg.Done()
 }
@@ -24,7 +30,8 @@ func downloadFile(url string, wg *sync.WaitGroup) {
 func generateRandomUrl() string {
 	quality := rand.Intn(100) + 1
 	picSumId := rand.Intn(100) + 1
-	return fmt.Sprintf("%s/?quality=%d&url=https://picsum.photos/id/%d/5000", IMAGE_STACK_URL, quality, picSumId)
+	size := rand.Intn(2000) + 3000
+	return fmt.Sprintf("%s/?quality=%d&url=https://picsum.photos/id/%d/%d", IMAGE_STACK_URL, quality, picSumId, size)
 }
 
 func main() {
