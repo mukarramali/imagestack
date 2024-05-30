@@ -34,7 +34,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	quality, _ := strconv.Atoi(r.FormValue("quality"))
 	width, _ := strconv.Atoi(r.FormValue("width"))
 	if quality == 0 {
-		quality = 10
+		quality = 100
 	}
 	if quality > 100 {
 		quality = 100
