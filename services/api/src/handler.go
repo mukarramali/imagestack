@@ -47,8 +47,11 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	redisService := request.NewRequestService(REDIS_URL)
 	existingRequest, _ := redisService.GetRequestByUrl(url)
 	if existingRequest != nil && existingRequest.Quality == quality && existingRequest.Width == width {
+		w.Header().Set("X-Cache", "HIT")
 		http.ServeFile(w, r, existingRequest.LocalPathOptimized)
 		return
+	} else {
+		w.Header().Set("X-Cache", "MISS")
 	}
 
 	imageId, _ := redisService.NewRequest(url, quality, width)
