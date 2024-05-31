@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"imagestack/lib/error_handler"
 	"imagestack/lib/request"
 
 	"github.com/rabbitmq/amqp091-go"
@@ -26,7 +25,7 @@ func init() {
 
 func ConsumeQueues() {
 
-	go compressQueueService.Consume(func(msg amqp091.Delivery) {
+	go compressQueueService.Consume(func(msg amqp091.Delivery) error {
 		requestId := string(msg.Body)
 		request, _ := redisService.GetRequest(requestId)
 
@@ -36,21 +35,23 @@ func ConsumeQueues() {
 		err := CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
 
 		if err != nil {
-			// TODO: Report error
-			fmt.Println(err)
-			return
+			return err
 		}
 
 		redisService.SetLocalPathOptimized(requestId, outputPath)
 
 		// send event for cleanup
 		cleanupQueueService.Publish(requestId)
+		return nil
 	})
-	go cleanupQueueService.Consume(func(msg amqp091.Delivery) {
+	go cleanupQueueService.Consume(func(msg amqp091.Delivery) error {
 		requestId := string(msg.Body)
 		request, _ := redisService.GetRequest(requestId)
 		err := os.Remove(request.LocalPathUnOptimized)
-		error_handler.FailOnError(err, "Couldn't delete uncompressed image")
+		if err != nil {
+			return err
+		}
 		redisService.SetStatus(requestId, "completed")
+		return nil
 	})
 }

@@ -5,7 +5,6 @@ import (
 	"imagestack/lib/rabbitmq_service"
 	"path/filepath"
 
-	"imagestack/lib/error_handler"
 	"imagestack/lib/file_handler"
 	"imagestack/lib/request"
 
@@ -26,19 +25,22 @@ func init() {
 }
 
 func ConsumeQueues() {
-	go downloadQueueService.Consume(func(msg amqp091.Delivery) {
+	go downloadQueueService.Consume(func(msg amqp091.Delivery) error {
 		requestId := string(msg.Body)
 		request, _ := redisService.GetRequest(requestId)
 
 		// download image
 		localPath := filepath.Join(BASE_IMAGE_DIR, "raw", fmt.Sprintf("%s.jpg", requestId))
 		err := file_handler.DownloadImage(request.Url, localPath)
-		error_handler.FailOnError(err, "Could not download image")
+		if err != nil {
+			return err
+		}
 
 		// update request with local un optimized image path
 		redisService.SetLocalPathUnOptimized(requestId, localPath)
 
 		// send event for compressing
 		compressQueueService.Publish(requestId)
+		return nil
 	})
 }
