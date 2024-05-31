@@ -25,7 +25,7 @@ func init() {
 	redisService = request.NewRequestService(REDIS_URL)
 }
 
-func RegisterQueues() {
+func ConsumeQueues() {
 	go downloadQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
 		request, _ := redisService.GetRequest(requestId)

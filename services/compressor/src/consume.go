@@ -1,7 +1,6 @@
 package src
 
 import (
-	"compressor/shared"
 	"fmt"
 	"imagestack/lib/rabbitmq_service"
 	"os"
@@ -20,18 +19,18 @@ var (
 )
 
 func init() {
-	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images", shared.RABBITMQ_URL)
-	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images", shared.RABBITMQ_URL)
+	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images", RABBITMQ_URL)
+	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images", RABBITMQ_URL)
 
-	redisService = request.NewRequestService(shared.REDIS_URL)
+	redisService = request.NewRequestService(REDIS_URL)
 }
 
-func RegisterQueues() {
+func ConsumeQueues() {
 	go compressQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
 		request, _ := redisService.GetRequest(requestId)
 
-		outputPath := filepath.Join(shared.BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", requestId))
+		outputPath := filepath.Join(BASE_IMAGE_DIR, "compressed", fmt.Sprintf("%s.jpg", requestId))
 
 		// compress
 		err := CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
