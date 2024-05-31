@@ -52,7 +52,7 @@ services:
         condition: service_healthy
     deploy:
       mode: replicated
-      replicas: 1
+      replicas: 5
       resources:
         limits:
           cpus: "0.50"
