@@ -57,6 +57,9 @@ services:
         limits:
           cpus: "0.50"
           memory: 400M
+      restart_policy:
+        condition: on-failure
+        max_attempts: 2
   redis:
     ports:
       - 6379:6379
