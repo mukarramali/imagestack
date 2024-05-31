@@ -33,7 +33,7 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-  compressor1:
+  compressor:
     build:
       context: .
       dockerfile: services/compressor/Dockerfile
@@ -43,30 +43,20 @@ services:
       RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
       BASE_IMAGE_DIR: "/data/images/"
       NODE_ID: "compressor-1"
-    ports:
-      - 8082:8080
+    # ports:
+    #   - 8082:8080
     volumes:
       - ./data/images:/data/images
     depends_on:
       rabbitmq:
         condition: service_healthy
-  compressor2:
-    build:
-      context: .
-      dockerfile: services/compressor/Dockerfile
-      target: final
-    environment:
-      REDIS_URL: "redis://redis:6379"
-      RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
-      BASE_IMAGE_DIR: "/data/images/"
-      NODE_ID: "compressor-2"
-    ports:
-      - 8083:8080
-    volumes:
-      - ./data/images:/data/images
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 400M
   redis:
     ports:
       - 6379:6379

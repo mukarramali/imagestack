@@ -2,10 +2,17 @@ package main
 
 import (
 	"compressor/src"
+	"fmt"
+	"math/rand"
 	"net/http"
+	"os"
 )
 
 func init() {
+	if os.Getenv("NODE_ID") == "" {
+		os.Setenv("NODE_ID", fmt.Sprintf("compressor:%d", rand.Intn(100)+1))
+	}
+
 	src.ConsumeQueues()
 }
 
