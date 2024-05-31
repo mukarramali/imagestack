@@ -28,14 +28,16 @@ func (rs *RabbitMqService) Consume(handler func(msg amqp091.Delivery) error) {
 
 	go func() {
 		for d := range msgs {
-			log.Println(d)
-			err := handler(d)
-			if err == nil {
-				d.Ack(false)
-			} else {
-				fmt.Printf("Msg failed by %s, error: %s\n", nodeId, err)
-				d.Nack(false, false)
-			}
+			log.Println("TraceId:" + string(d.Body))
+			go func(msg amqp091.Delivery) {
+				err := handler(msg)
+				if err == nil {
+					msg.Ack(false)
+				} else {
+					fmt.Printf("Msg failed by %s, error: %s\n", nodeId, err)
+					msg.Nack(false, false)
+				}
+			}(d)
 		}
 	}()
 
