@@ -20,7 +20,7 @@ func CompressImage(inputPath string, outputPath string, quality int, width int) 
 		options.Width = width
 	}
 
-	newImage, err := bimg.NewImage(buffer).Process(options)
+	newImage, err := bimg.Resize(buffer, options)
 	if err != nil {
 		return fmt.Errorf("failed to process image: %v", err)
 	}
