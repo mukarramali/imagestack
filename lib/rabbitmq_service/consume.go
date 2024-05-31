@@ -3,15 +3,19 @@ package rabbitmq_service
 import (
 	"imagestack/lib/error_handler"
 	"log"
+	"os"
 
 	"github.com/rabbitmq/amqp091-go"
 )
 
+// uses NODE_ID from env as consumer name. If not provided, generates unique tag
+// Ack true when msg is consumed successfully
 func (rs *RabbitMqService) Consume(handler func(msg amqp091.Delivery)) {
-	msgs, err := rs.client.Consume(
-		rs.queue.Name, // queue
-		"",            // consumer
-		true,          // auto-ack
+	nodeId := os.Getenv("NODE_ID")
+	msgs, err := rs.Client.Consume(
+		rs.Queue.Name, // queue
+		nodeId,        // consumer
+		false,         // auto-ack
 		false,         // exclusive
 		false,         // no-local
 		false,         // no-wait
@@ -25,6 +29,7 @@ func (rs *RabbitMqService) Consume(handler func(msg amqp091.Delivery)) {
 		for d := range msgs {
 			log.Println(d)
 			handler(d)
+			d.Ack(true)
 		}
 	}()
 

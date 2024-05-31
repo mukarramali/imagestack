@@ -13,9 +13,9 @@ func (rs *RabbitMqService) Publish(body string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := rs.client.PublishWithContext(ctx,
+	err := rs.Client.PublishWithContext(ctx,
 		"",            // exchange
-		rs.queue.Name, // routing key
+		rs.Queue.Name, // routing key
 		false,         // mandatory
 		false,         // immediate
 		amqp.Publishing{

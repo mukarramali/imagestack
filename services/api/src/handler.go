@@ -18,7 +18,7 @@ var (
 )
 
 func init() {
-	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images", RABBITMQ_URL)
+	downloadQueueService = rabbitmq_service.NewRabbitMqService("download_images", RABBITMQ_URL, 0)
 }
 
 func setHeaders(w *http.ResponseWriter) {

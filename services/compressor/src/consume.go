@@ -19,13 +19,13 @@ var (
 )
 
 func init() {
-	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images", RABBITMQ_URL)
-	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images", RABBITMQ_URL)
-
+	compressQueueService = rabbitmq_service.NewRabbitMqService("compress_images", RABBITMQ_URL, 10)
+	cleanupQueueService = rabbitmq_service.NewRabbitMqService("cleanup_images", RABBITMQ_URL, 0)
 	redisService = request.NewRequestService(REDIS_URL)
 }
 
 func ConsumeQueues() {
+
 	go compressQueueService.Consume(func(msg amqp091.Delivery) {
 		requestId := string(msg.Body)
 		request, _ := redisService.GetRequest(requestId)

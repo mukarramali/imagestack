@@ -7,11 +7,12 @@ import (
 )
 
 type RabbitMqService struct {
-	client *amqp.Channel
-	queue  *amqp.Queue
+	Client *amqp.Channel
+	Queue  *amqp.Queue
 }
 
-func NewRabbitMqService(queueName string, amqpUrl string) *RabbitMqService {
+// prefetchCountPerConsumer should be set to 0 when being used by a publisher
+func NewRabbitMqService(queueName string, amqpUrl string, prefetchCountPerConsumer int) *RabbitMqService {
 	client := getClient(amqpUrl)
 	queue, err := client.QueueDeclare(
 		queueName,
@@ -22,9 +23,11 @@ func NewRabbitMqService(queueName string, amqpUrl string) *RabbitMqService {
 		nil,
 	)
 
+	client.Qos(prefetchCountPerConsumer, 0, false)
+
 	error_handler.FailOnError(err, "Failed to create a queue")
 	return &RabbitMqService{
-		client: client,
-		queue:  &queue,
+		Client: client,
+		Queue:  &queue,
 	}
 }
