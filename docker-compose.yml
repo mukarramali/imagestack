@@ -8,6 +8,7 @@ services:
       REDIS_URL: "redis://redis:6379"
       RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
       BASE_IMAGE_DIR: "/data/images/"
+      NODE_ID: "api-1"
     ports:
       - 8080:8080
     volumes:
@@ -24,14 +25,15 @@ services:
       REDIS_URL: "redis://redis:6379"
       RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
       BASE_IMAGE_DIR: "/data/images/"
+      NODE_ID: "downloader-1"
     ports:
-      - 8082:8080
+      - 8081:8080
     volumes:
       - ./data/images:/data/images
     depends_on:
       rabbitmq:
         condition: service_healthy
-  compressor:
+  compressor1:
     build:
       context: .
       dockerfile: services/compressor/Dockerfile
@@ -40,8 +42,26 @@ services:
       REDIS_URL: "redis://redis:6379"
       RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
       BASE_IMAGE_DIR: "/data/images/"
+      NODE_ID: "compressor-1"
     ports:
-      - 8081:8080
+      - 8082:8080
+    volumes:
+      - ./data/images:/data/images
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+  compressor2:
+    build:
+      context: .
+      dockerfile: services/compressor/Dockerfile
+      target: final
+    environment:
+      REDIS_URL: "redis://redis:6379"
+      RABBITMQ_URL: "amqp://user:password@rabbitmq:5672/"
+      BASE_IMAGE_DIR: "/data/images/"
+      NODE_ID: "compressor-2"
+    ports:
+      - 8083:8080
     volumes:
       - ./data/images:/data/images
     depends_on:
