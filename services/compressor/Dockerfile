@@ -51,5 +51,7 @@ COPY --from=build /bin/server /bin/
 # Expose the port that the application listens on
 EXPOSE 8080
 
+ENV MALLOC_ARENA_MAX=2
+
 # Run the application
 ENTRYPOINT [ "/bin/server" ]
