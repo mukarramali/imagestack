@@ -18,6 +18,8 @@ RUN go mod tidy
 # Copy the source code
 COPY services/compressor .
 
+ENV MALLOC_ARENA_MAX=2
+
 # Build the application
 RUN CGO_ENABLED=1 go build -o /bin/server .
 

@@ -35,6 +35,7 @@ func ConsumeQueues() {
 		err := CompressImage(request.LocalPathUnOptimized, outputPath, request.Quality, request.Width)
 
 		if err != nil {
+			redisService.SetStatus(requestId, "error")
 			return err
 		}
 
