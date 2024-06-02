@@ -9,7 +9,9 @@ import (
 	"sync"
 )
 
-var IMAGE_STACK_URL = "https://imagestack-latest.sliplane.app"
+var IMAGE_STACK_URL = "http://localhost:8080"
+
+// var IMAGE_STACK_URL = "https://imagestack-latest.sliplane.app"
 
 func downloadFile(url string, wg *sync.WaitGroup) {
 	fmt.Println(url)

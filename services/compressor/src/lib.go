@@ -7,6 +7,9 @@ import (
 )
 
 func CompressImage(inputPath string, outputPath string, quality int, width int) error {
+	bimg.VipsCacheSetMax(0)
+	bimg.VipsCacheSetMaxMem(0)
+
 	buffer, err := bimg.Read(inputPath)
 	if err != nil {
 		return err

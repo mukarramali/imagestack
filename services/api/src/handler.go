@@ -32,12 +32,12 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	redisService := request.NewRequestService(REDIS_URL)
 	existingRequest, _ := redisService.GetRequestByUrl(params.url)
 	if existingRequest != nil {
-		if existingRequest.Quality == params.quality && existingRequest.Width == params.width {
+		if existingRequest.Status == "completed" && existingRequest.Quality == params.quality && existingRequest.Width == params.width {
 			w.Header().Set("X-Cache", "HIT")
 			http.ServeFile(w, r, existingRequest.LocalPathOptimized)
 			return
 		} else if existingRequest.Status == "error" {
-			http.Error(w, "Check the source", http.StatusNotFound)
+			http.Error(w, "404: Check the source", http.StatusNotFound)
 			return
 		}
 	}
